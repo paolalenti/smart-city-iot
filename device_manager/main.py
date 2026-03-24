@@ -28,3 +28,40 @@ def create_device(device: schemas.DeviceCreate, db: Session = Depends(get_db)):
 def get_devices(db: Session = Depends(get_db)):
     devices = db.query(models.Device).all()
     return devices
+
+
+@app.get("/devices/{device_id}", response_model=schemas.Device)
+def get_device(device_id: int, db: Session = Depends(get_db)):
+    db_device = db.query(models.Device).filter(models.Device.id == device_id).first()
+    if db_device is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return db_device
+
+
+@app.patch("/devices/{device_id}", response_model=schemas.Device)
+def update_device(
+        device_id: int, device_update: schemas.DeviceUpdate, db: Session = Depends(get_db)
+):
+    db_device = db.query(models.Device).filter(models.Device.id == device_id).first()
+    if db_device is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    update_data = device_update.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(db_device, key, value)
+
+    db.commit()
+    db.refresh(db_device)
+    return db_device
+
+
+@app.delete("/devices/{device_id}")
+def delete_device(device_id: int, db: Session = Depends(get_db)):
+    db_device = db.query(models.Device).filter(models.Device.id == device_id).first()
+    if db_device is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    db.delete(db_device)
+    db.commit()
+    return {"message": f"Device {device_id} has been deleted successfully"}
