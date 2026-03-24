@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+from producer import send_device_event
 
 import models, schemas
 from database import engine, get_db
@@ -21,6 +22,17 @@ def create_device(device: schemas.DeviceCreate, db: Session = Depends(get_db)):
     db.add(db_device)
     db.commit()
     db.refresh(db_device)
+
+    device_info = {
+        "id": db_device.id,
+        "name": db_device.name,
+        "type": db_device.type,
+        "location": db_device.location,
+        "is_active": db_device.is_active,
+        "created_at": db_device.created_at.isoformat()
+    }
+    send_device_event("created", device_info)
+
     return db_device
 
 
@@ -64,4 +76,6 @@ def delete_device(device_id: int, db: Session = Depends(get_db)):
 
     db.delete(db_device)
     db.commit()
+
+    send_device_event("deleted", {"device_id": device_id})
     return {"message": f"Device {device_id} has been deleted successfully"}
