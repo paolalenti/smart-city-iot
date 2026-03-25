@@ -12,6 +12,31 @@ services:
       - "5433:5432"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  device_manager:
+    build: ./device_manager
+    container_name: iot_device_manager
+    ports:
+      - "8000:8000"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    volumes:
+      - ./device_manager:/app
 
   # 2. Кэш и Rate Limiter (Redis)
   redis:
@@ -31,7 +56,6 @@ services:
       - KAFKA_PROCESS_ROLES=broker,controller
       - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
-      # Важное изменение здесь:
       - KAFKA_LISTENERS=INTERNAL://:29092,EXTERNAL://:9092,CONTROLLER://:9093
       - KAFKA_ADVERTISED_LISTENERS=INTERNAL://kafka:29092,EXTERNAL://localhost:9092
       - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
@@ -48,7 +72,6 @@ services:
       - "8080:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
-      # Теперь UI идет по внутреннему порту 29092:
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
     depends_on:
       - kafka

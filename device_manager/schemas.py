@@ -16,3 +16,10 @@ class Device(DeviceCreate):
 
     class Config:
         from_attributes = True
+
+
+class DeviceUpdate(BaseModel):
+    name: Optional[str] = None
+    type: Optional[str] = None
+    location: Optional[str] = None
+    is_active: Optional[bool] = None
