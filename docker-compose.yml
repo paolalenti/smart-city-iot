@@ -18,11 +18,21 @@ services:
       timeout: 5s
       retries: 5
 
+  api_gateway:
+    build: ./api_gateway
+    container_name: iot_api_gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - DEVICE_MANAGER_URL=http://device_manager:8000
+    depends_on:
+      - device_manager
+      - redis
+
   device_manager:
     build: ./device_manager
     container_name: iot_device_manager
-    ports:
-      - "8000:8000"
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - POSTGRES_USER=${POSTGRES_USER}
@@ -30,10 +40,14 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       db:
         condition: service_healthy
       kafka:
+        condition: service_started
+      redis:
         condition: service_started
     volumes:
       - ./device_manager:/app
@@ -69,7 +83,7 @@ services:
     image: provectuslabs/kafka-ui:latest
     container_name: iot_kafka_ui
     ports:
-      - "8080:8080"
+      - "9000:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
