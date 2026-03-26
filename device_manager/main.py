@@ -11,7 +11,7 @@ from database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="IoT Device Manager", root_path="")
+app = FastAPI(title="IoT Device Manager", root_path="/device_manager")
 
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))

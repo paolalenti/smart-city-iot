@@ -12,8 +12,10 @@ redis_client = Redis(
     decode_responses=True
 )
 
-DEVICE_MANAGER_URL = os.getenv("DEVICE_MANAGER_URL", "http://device_manager:8000")
-TELEMETRY_URL = os.getenv("TELEMETRY_URL", "http://telemetry_ingestor:8001")
+SERVICES = {
+    "device_manager": os.getenv("DEVICE_MANAGER_URL", "http://device_manager:8000"),
+    "telemetry": os.getenv("TELEMETRY_URL", "http://telemetry_ingestor:8001"),
+}
 
 
 @app.middleware("http")
@@ -31,16 +33,15 @@ async def rate_limit_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-async def proxy_router(request: Request, path: str):
+@app.api_route("/{service_name}/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_router(request: Request, service_name: str, path: str):
     """ Маршрутизатор (Router) """
 
-    if path.startswith("devices") or path == "docs" or path == "openapi.json":
-        target_url = f"{DEVICE_MANAGER_URL}/{path}"
-    elif path.startswith("telemetry"):
-        target_url = f"{TELEMETRY_URL}/{path}"
-    else:
-        raise HTTPException(status_code=404, detail="Service not found")
+    if service_name not in SERVICES:
+        raise HTTPException(status_code=404, detail=f"Service '{service_name}' not found")
+
+    target_base_url = SERVICES[service_name]
+    target_url = f"{target_base_url}/{path}"
 
     async with httpx.AsyncClient() as client:
         headers = dict(request.headers)
