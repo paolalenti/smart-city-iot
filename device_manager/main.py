@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Depends, HTTPException
+import os
+import redis
+from fastapi import FastAPI, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from typing import List
 from producer import send_device_event
@@ -11,9 +13,43 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="IoT Device Manager")
 
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 
-@app.post("/devices/", response_model=schemas.Device)
-def create_device(device: schemas.DeviceCreate, db: Session = Depends(get_db)):
+redis_client = redis.Redis(
+    host=REDIS_HOST, port=REDIS_PORT,
+    db=0, decode_responses=True
+)
+
+RATE_LIMIT = 5
+RATE_LIMIT_WINDOW = 60
+
+
+def check_rate_limit(request: Request):
+    ip = request.client.host
+    key = f"rate_limit:{ip}"
+
+    current_requests = redis_client.incr(key)
+
+    if current_requests == 1:
+        redis_client.expire(key, RATE_LIMIT_WINDOW)
+
+    if current_requests > RATE_LIMIT:
+        raise HTTPException(
+            status_code=429,
+            detail="Too Many Requests. Please wait before registering new devices."
+        )
+
+
+@app.post(
+    "/devices/",
+    response_model=schemas.Device,
+    dependencies=[Depends(check_rate_limit)]
+          )
+def create_device(
+        device: schemas.DeviceCreate,
+        db: Session = Depends(get_db)
+):
     db_device = models.Device(
         name=device.name,
         type=device.type,
