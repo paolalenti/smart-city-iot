@@ -52,6 +52,24 @@ services:
     volumes:
       - ./device_manager:/app
 
+  alert_engine:
+    build: ./alert_engine
+    container_name: iot_alert_engine
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      kafka:
+        condition: service_started
+
+  automation_service:
+    build: ./automation_service
+    container_name: iot_automation_service
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      kafka:
+        condition: service_started
+
   # 2. Кэш и Rate Limiter (Redis)
   redis:
     image: redis:7-alpine
