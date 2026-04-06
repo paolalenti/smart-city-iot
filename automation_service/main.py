@@ -1,6 +1,7 @@
 import os
 import json
 from confluent_kafka import Consumer
+from producer import send_notification
 
 KAFKA_SERVER = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 print(f"DEBUG: Connecting to Kafka at {KAFKA_SERVER}")
@@ -30,12 +31,12 @@ while True:
     # Можно заменить на отправку уведомлений
     match alert_type:
         case "temperature-high":
-            print("INFO: Включаю полив")
+            send_notification("INFO", "Включаю полив")
         case "temperature-low":
-            print("INFO: Включаю отопление")
+            send_notification("INFO", "Включаю отопление")
         case "humidity-high":
-            print("INFO: Включаю проветривание")
+            send_notification("INFO", "Включаю проветривание")
         case "humidity-low":
-            print("INFO: Включаю полив")
+            send_notification("INFO", "Включаю полив")
 
 consumer.close()
