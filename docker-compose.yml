@@ -46,11 +46,29 @@ services:
       db:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_started
     volumes:
       - ./device_manager:/app
+
+  alert_engine:
+    build: ./alert_engine
+    container_name: iot_alert_engine
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  automation_service:
+    build: ./automation_service
+    container_name: iot_automation_service
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
 
   # 2. Кэш и Rate Limiter (Redis)
   redis:
@@ -78,6 +96,12 @@ services:
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
     volumes:
       - ./data/kafka:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
