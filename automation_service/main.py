@@ -1,7 +1,7 @@
 import os
 import json
 from confluent_kafka import Consumer
-from producer import send_notification
+from producer import send_notification, send_command
 
 KAFKA_SERVER = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 print(f"DEBUG: Connecting to Kafka at {KAFKA_SERVER}")
@@ -14,6 +14,22 @@ conf = {
 consumer = Consumer(conf)
 consumer.subscribe(['alerts'])
 
+
+command_map = {
+    ('temperature', 'high'): 'activate watering',
+    ('temperature', 'low'): 'activate heating',
+    ('humidity', 'high'): 'activate ventilation',
+    ('humidity', 'low'): 'activate watering'
+}
+
+notification_map = {
+    ('temperature', 'high'): "Критично высокая температура, примите меры!",
+    ('temperature', 'low'): "Критично низкая температура, примите меры!",
+    ('humidity', 'high'): "Критично высокая влажность, примите меры!",
+    ('humidity', 'low'): "Критично низкая влажность, примите меры!"
+}
+
+
 try:
     while True:
         msg = consumer.poll()
@@ -23,21 +39,22 @@ try:
             continue
 
         payload = json.loads(msg.value().decode("utf-8"))
+        print(f"Получена тревога: {payload}")
 
-        alert_type = payload['alert_type']
+        device_id = payload.get('device_id', None)
+        reading = payload.get('reading', None)
+        state = payload.get('state', None)
+        severity = payload.get('severity', None)
+        if device_id is None or reading is None or state is None or severity is None: continue
 
-        print(f"Получена тревога: {alert_type}")
-
-        # Заглушка, пишет логи в консоль
-        # Можно заменить на отправку уведомлений
-        match alert_type:
-            case "temperature-high":
-                send_notification("INFO", "Включаю полив")
-            case "temperature-low":
-                send_notification("INFO", "Включаю отопление")
-            case "humidity-high":
-                send_notification("INFO", "Включаю проветривание")
-            case "humidity-low":
-                send_notification("INFO", "Включаю полив")
+        if severity == 'low':
+            command = command_map.get((reading, state), None)
+            if command is None: continue
+            send_command(device_id, command)
+        elif severity == 'high':
+            notification = notification_map.get((reading, state), None)
+            if notification is None: continue
+            send_command(device_id, 'activate alarm')
+            send_notification('WARN', notification)
 finally:
     consumer.close()

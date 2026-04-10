@@ -32,3 +32,20 @@ def send_notification(notification_type: str, message: str):
 
     producer.poll(0)
     producer.flush()
+
+
+def send_command(device_id: str, command: str):
+    """Отправляет событие в топик commands"""
+    payload = {
+        'device_id': device_id,
+        'command': command
+    }
+
+    producer.produce(
+        topic="commands",
+        value=json.dumps(payload).encode('utf-8'),
+        callback=delivery_report
+    )
+
+    producer.poll(0)
+    producer.flush()

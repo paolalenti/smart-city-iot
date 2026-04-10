@@ -16,8 +16,8 @@ consumer.subscribe(['telemetry'])
 
 
 sensor_reading_limits = {
-    'temperature': (20, 50),
-    'humidity': (40, 60)
+    'temperature': (20, 25, 35, 40),
+    'humidity': (40, 45, 55, 60)
 }
 
 
@@ -32,11 +32,18 @@ try:
         payload = json.loads(msg.value().decode("utf-8"))
 
         for reading, limits in sensor_reading_limits.items():
-            min_v, max_v = limits
+            device_id = payload.get('device_id', None)
             val = payload.get(reading, None)
-            if val is None: continue
+            if device_id is None or val is None: continue
 
-            if val > max_v: send_alert(reading, True)
-            if val < min_v: send_alert(reading, False)
+            extreme_min, norm_min, norm_max, extreme_max = limits
+            if val >= extreme_max:
+                send_alert(device_id, reading, high=True, extreme=True)
+            elif val <= extreme_min:
+                send_alert(device_id, reading, high=False, extreme=True)
+            elif val > norm_max:
+                send_alert(device_id, reading, high=True, extreme=False)
+            elif val < norm_min:
+                send_alert(device_id, reading, high=False, extreme=False)
 finally:
     consumer.close()
