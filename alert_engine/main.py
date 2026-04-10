@@ -21,21 +21,22 @@ sensor_reading_limits = {
 }
 
 
-while True:
-    msg = consumer.poll(0)
-    if msg is None: continue
-    if msg.error():
-        print(f"Ошибка получения сообщения: {msg.error()}")
-        continue
+try:
+    while True:
+        msg = consumer.poll()
+        if msg is None: continue
+        if msg.error():
+            print(f"Ошибка получения сообщения: {msg.error()}")
+            continue
 
-    payload = json.loads(msg.value().decode("utf-8"))
+        payload = json.loads(msg.value().decode("utf-8"))
 
-    for reading, limits in sensor_reading_limits.items():
-        min_v, max_v = limits
-        val = payload.get(reading, None)
-        if val is None: continue
+        for reading, limits in sensor_reading_limits.items():
+            min_v, max_v = limits
+            val = payload.get(reading, None)
+            if val is None: continue
 
-        if val > max_v: send_alert(reading, True)
-        if val < min_v: send_alert(reading, False)
-
-consumer.close()
+            if val > max_v: send_alert(reading, True)
+            if val < min_v: send_alert(reading, False)
+finally:
+    consumer.close()

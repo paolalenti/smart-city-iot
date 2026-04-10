@@ -14,29 +14,30 @@ conf = {
 consumer = Consumer(conf)
 consumer.subscribe(['alerts'])
 
-while True:
-    msg = consumer.poll(0)
-    if msg is None: continue
-    if msg.error():
-        print(f"Ошибка получения сообщения: {msg.error()}")
-        continue
+try:
+    while True:
+        msg = consumer.poll()
+        if msg is None: continue
+        if msg.error():
+            print(f"Ошибка получения сообщения: {msg.error()}")
+            continue
 
-    payload = json.loads(msg.value().decode("utf-8"))
+        payload = json.loads(msg.value().decode("utf-8"))
 
-    alert_type = payload['alert_type']
+        alert_type = payload['alert_type']
 
-    print(f"Получена тревога: {alert_type}")
+        print(f"Получена тревога: {alert_type}")
 
-    # Заглушка, пишет логи в консоль
-    # Можно заменить на отправку уведомлений
-    match alert_type:
-        case "temperature-high":
-            send_notification("INFO", "Включаю полив")
-        case "temperature-low":
-            send_notification("INFO", "Включаю отопление")
-        case "humidity-high":
-            send_notification("INFO", "Включаю проветривание")
-        case "humidity-low":
-            send_notification("INFO", "Включаю полив")
-
-consumer.close()
+        # Заглушка, пишет логи в консоль
+        # Можно заменить на отправку уведомлений
+        match alert_type:
+            case "temperature-high":
+                send_notification("INFO", "Включаю полив")
+            case "temperature-low":
+                send_notification("INFO", "Включаю отопление")
+            case "humidity-high":
+                send_notification("INFO", "Включаю проветривание")
+            case "humidity-low":
+                send_notification("INFO", "Включаю полив")
+finally:
+    consumer.close()
