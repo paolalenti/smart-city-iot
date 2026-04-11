@@ -34,10 +34,10 @@ def send_notification(notification_type: str, message: str):
     producer.flush()
 
 
-def send_command(device_id: str, command: str):
+def send_command(device_serial: str, command: str):
     """Отправляет событие в топик commands"""
     payload = {
-        'device_id': device_id,
+        'device_serial': device_serial,
         'command': command
     }
 

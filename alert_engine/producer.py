@@ -17,10 +17,10 @@ def delivery_report(err, msg):
         print(f"Сообщение доставлено в {msg.topic()} [{msg.partition()}]")
 
 
-def send_alert(device_id: str, reading: str, high: bool, extreme: bool):
+def send_alert(device_serial: str, reading: str, high: bool, extreme: bool):
     """Отправляет событие в топик alerts"""
     payload = {
-        'device_id': device_id,
+        'device_serial': device_serial,
         'reading': reading,
         'state': 'high' if high else 'low',
         'severity': 'high' if extreme else 'low'

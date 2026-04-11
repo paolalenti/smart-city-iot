@@ -41,20 +41,20 @@ try:
         payload = json.loads(msg.value().decode("utf-8"))
         print(f"Получена тревога: {payload}")
 
-        device_id = payload.get('device_id', None)
+        device_serial = payload.get('device_serial', None)
         reading = payload.get('reading', None)
         state = payload.get('state', None)
         severity = payload.get('severity', None)
-        if device_id is None or reading is None or state is None or severity is None: continue
+        if device_serial is None or reading is None or state is None or severity is None: continue
 
         if severity == 'low':
             command = command_map.get((reading, state), None)
             if command is None: continue
-            send_command(device_id, command)
+            send_command(device_serial, command)
         elif severity == 'high':
             notification = notification_map.get((reading, state), None)
             if notification is None: continue
-            send_command(device_id, 'activate alarm')
+            send_command(device_serial, 'activate alarm')
             send_notification('WARN', notification)
 finally:
     consumer.close()

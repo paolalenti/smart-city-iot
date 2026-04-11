@@ -32,18 +32,18 @@ try:
         payload = json.loads(msg.value().decode("utf-8"))
 
         for reading, limits in sensor_reading_limits.items():
-            device_id = payload.get('device_id', None)
+            device_serial = payload.get('device_serial', None)
             val = payload.get(reading, None)
-            if device_id is None or val is None: continue
+            if device_serial is None or val is None: continue
 
             extreme_min, norm_min, norm_max, extreme_max = limits
             if val >= extreme_max:
-                send_alert(device_id, reading, high=True, extreme=True)
+                send_alert(device_serial, reading, high=True, extreme=True)
             elif val <= extreme_min:
-                send_alert(device_id, reading, high=False, extreme=True)
+                send_alert(device_serial, reading, high=False, extreme=True)
             elif val > norm_max:
-                send_alert(device_id, reading, high=True, extreme=False)
+                send_alert(device_serial, reading, high=True, extreme=False)
             elif val < norm_min:
-                send_alert(device_id, reading, high=False, extreme=False)
+                send_alert(device_serial, reading, high=False, extreme=False)
 finally:
     consumer.close()

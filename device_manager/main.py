@@ -51,9 +51,11 @@ def create_device(
         db: Session = Depends(get_db)
 ):
     db_device = models.Device(
+        serial_code=device.serial_code,
         name=device.name,
         type=device.type,
-        location=device.location
+        location=device.location,
+        api_endpoint=device.api_endpoint
     )
     db.add(db_device)
     db.commit()
@@ -61,9 +63,11 @@ def create_device(
 
     device_info = {
         "id": db_device.id,
+        "serial_code": db_device.serial_code,
         "name": db_device.name,
         "type": db_device.type,
         "location": db_device.location,
+        "api_endpoint": db_device.api_endpoint,
         "is_active": db_device.is_active,
         "created_at": db_device.created_at.isoformat()
     }

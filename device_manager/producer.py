@@ -3,7 +3,7 @@ import json
 from confluent_kafka import Producer
 
 
-KAFKA_SERVER = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9094")
+KAFKA_SERVER = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 print(f"DEBUG: Connecting to Kafka at {KAFKA_SERVER}")
 
 conf = {'bootstrap.servers': KAFKA_SERVER}
@@ -30,6 +30,23 @@ def send_device_event(event_type: str, device_data: dict):
 
     producer.produce(
         topic="device_events",
+        value=json.dumps(payload).encode('utf-8'),
+        callback=delivery_report
+    )
+
+    producer.poll(0)
+    producer.flush()
+
+
+def send_notification(notification_type: str, message: str):
+    """Отправляет событие в топик notifications"""
+    payload = {
+        'notification_type': notification_type,
+        'message': message
+    }
+
+    producer.produce(
+        topic="notifications",
         value=json.dumps(payload).encode('utf-8'),
         callback=delivery_report
     )
