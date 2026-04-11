@@ -16,26 +16,34 @@ consumer.subscribe(['telemetry'])
 
 
 sensor_reading_limits = {
-    'temperature': (20, 50),
-    'humidity': (40, 60)
+    'temperature': (20, 25, 35, 40),
+    'humidity': (40, 45, 55, 60)
 }
 
 
-while True:
-    msg = consumer.poll(0)
-    if msg is None: continue
-    if msg.error():
-        print(f"Ошибка получения сообщения: {msg.error()}")
-        continue
+try:
+    while True:
+        msg = consumer.poll()
+        if msg is None: continue
+        if msg.error():
+            print(f"Ошибка получения сообщения: {msg.error()}")
+            continue
 
-    payload = json.loads(msg.value().decode("utf-8"))
+        payload = json.loads(msg.value().decode("utf-8"))
 
-    for reading, limits in sensor_reading_limits.items():
-        min_v, max_v = limits
-        val = payload.get(reading, None)
-        if val is None: continue
+        for reading, limits in sensor_reading_limits.items():
+            device_serial = payload.get('device_serial', None)
+            val = payload.get(reading, None)
+            if device_serial is None or val is None: continue
 
-        if val > max_v: send_alert(reading, True)
-        if val < min_v: send_alert(reading, False)
-
-consumer.close()
+            extreme_min, norm_min, norm_max, extreme_max = limits
+            if val >= extreme_max:
+                send_alert(device_serial, reading, high=True, extreme=True)
+            elif val <= extreme_min:
+                send_alert(device_serial, reading, high=False, extreme=True)
+            elif val > norm_max:
+                send_alert(device_serial, reading, high=True, extreme=False)
+            elif val < norm_min:
+                send_alert(device_serial, reading, high=False, extreme=False)
+finally:
+    consumer.close()

@@ -4,9 +4,11 @@ from datetime import datetime
 
 
 class DeviceCreate(BaseModel):
+    serial_code: int
     name: str
     type: str
     location: Optional[str] = None
+    api_endpoint: Optional[str] = None
 
 
 class Device(DeviceCreate):
@@ -22,4 +24,5 @@ class DeviceUpdate(BaseModel):
     name: Optional[str] = None
     type: Optional[str] = None
     location: Optional[str] = None
+    api_endpoint: Optional[str] = None
     is_active: Optional[bool] = None

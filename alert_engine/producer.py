@@ -17,10 +17,13 @@ def delivery_report(err, msg):
         print(f"Сообщение доставлено в {msg.topic()} [{msg.partition()}]")
 
 
-def send_alert(reading: str, high: bool):
+def send_alert(device_serial: str, reading: str, high: bool, extreme: bool):
     """Отправляет событие в топик alerts"""
     payload = {
-        'alert_type': f"{reading}-{'high' if high else 'low'}"
+        'device_serial': device_serial,
+        'reading': reading,
+        'state': 'high' if high else 'low',
+        'severity': 'high' if extreme else 'low'
     }
 
     producer.produce(
