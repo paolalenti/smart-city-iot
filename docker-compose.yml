@@ -18,6 +18,24 @@ services:
       timeout: 5s
       retries: 5
 
+  telemetry_db:
+    image: postgres:15-alpine
+    container_name: iot_telemetry_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB_TELEMETRY}
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./data/telemetry_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB_TELEMETRY}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   api_gateway:
     build: ./api_gateway
     container_name: iot_api_gateway
@@ -26,8 +44,10 @@ services:
     environment:
       - REDIS_HOST=redis
       - DEVICE_MANAGER_URL=http://device_manager:8000
+      - TELEMETRY_URL=http://telemetry_ingestor:8001
     depends_on:
       - device_manager
+      - telemetry_ingestor
       - redis
 
   device_manager:
@@ -51,6 +71,28 @@ services:
         condition: service_started
     volumes:
       - ./device_manager:/app
+
+  telemetry_ingestor:
+    build: ./telemetry
+    container_name: iot_telemetry
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB_TELEMETRY=${POSTGRES_DB_TELEMETRY}
+      - POSTGRES_HOST=telemetry_db
+      - POSTGRES_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      telemetry_db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./telemetry:/app
 
   alert_engine:
     build: ./alert_engine
