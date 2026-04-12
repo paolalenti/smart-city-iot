@@ -18,6 +18,7 @@ redis_client = Redis(
 SERVICES = {
     "device_manager": os.getenv("DEVICE_MANAGER_URL", "http://device_manager:8000"),
     "telemetry": os.getenv("TELEMETRY_URL", "http://telemetry_ingestor:8001"),
+    "historical": os.getenv("HISTORICAL_URL", "http://historical_service:8002"),
 }
 
 

@@ -1,5 +1,4 @@
 services:
-  # 1. База данных для Device Manager (PostgreSQL)
   db:
     image: postgres:15-alpine
     container_name: iot_postgres
@@ -45,9 +44,11 @@ services:
       - REDIS_HOST=redis
       - DEVICE_MANAGER_URL=http://device_manager:8000
       - TELEMETRY_URL=http://telemetry_ingestor:8001
+      - HISTORICAL_URL=http://historical_service:8002
     depends_on:
       - device_manager
       - telemetry_ingestor
+      - historical_service
       - redis
 
   device_manager:
@@ -94,6 +95,22 @@ services:
     volumes:
       - ./telemetry:/app
 
+  historical_service:
+    build: ./hist
+    container_name: iot_historical
+    ports:
+      - "8002:8002"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - INFLUXDB_URL=${INFLUXDB_URL}
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
+    depends_on:
+      - influxdb
+      - kafka
+    restart: unless-stopped
+
   alert_engine:
     build: ./alert_engine
     container_name: iot_alert_engine
@@ -112,14 +129,12 @@ services:
       kafka:
         condition: service_healthy
 
-  # 2. Кэш и Rate Limiter (Redis)
   redis:
     image: redis:7-alpine
     container_name: iot_redis
     ports:
       - "6379:6379"
 
-  # 3. Брокер сообщений (Apache Kafka в режиме KRaft)
   kafka:
     image: apache/kafka:latest
     container_name: iot_kafka
@@ -156,7 +171,6 @@ services:
     depends_on:
       - kafka
 
-  # 5. Хранилище метрик для Historical Service (InfluxDB)
   influxdb:
     image: influxdb:2.7-alpine
     container_name: iot_influxdb
@@ -171,3 +185,4 @@ services:
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
     volumes:
       - ./data/influxdb:/var/lib/influxdb2
+    restart: unless-stopped

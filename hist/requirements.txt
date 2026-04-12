@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+confluent-kafka
+influxdb-client
+python-dotenv
+pydantic
