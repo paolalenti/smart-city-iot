@@ -134,7 +134,8 @@ services:
     container_name: iot_notification_service
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - BOT_TOKEN=${BOT_TOKEN}
+      - CHAT_ID=${CHAT_ID}
     depends_on:
       kafka:
         condition: service_healthy
@@ -147,6 +148,7 @@ services:
 
   kafka:
     image: apache/kafka:latest
+    user: root
     container_name: iot_kafka
     ports:
       - "9092:9092"

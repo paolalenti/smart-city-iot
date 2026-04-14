@@ -86,6 +86,14 @@ def update_unit(unit_id: int, unit_update: schemas.UnitUpdate, db: Session = Dep
 
     db.commit()
     db.refresh(db_unit)
+
+    send_device_event("unit_updated", {
+        "id": db_unit.id,
+        "uid": db_unit.uid,
+        "name": db_unit.name,
+        "location": db_unit.location,
+        "is_active": db_unit.is_active,
+    })
     return db_unit
 
 
@@ -159,6 +167,18 @@ def update_device(device_id: int, device_update: schemas.DeviceUpdate, db: Sessi
 
     db.commit()
     db.refresh(db_device)
+
+    send_device_event("updated", {
+        "id": db_device.id,
+        "serial_code": db_device.serial_code,
+        "name": db_device.name,
+        "type": db_device.type,
+        "location": db_device.location,
+        "api_endpoint": db_device.api_endpoint,
+        "is_active": db_device.is_active,
+        "unit_id": db_device.unit_id,
+    })
+
     return db_device
 
 

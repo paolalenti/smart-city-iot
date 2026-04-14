@@ -78,7 +78,7 @@ async def swagger_ui():
     return get_swagger_ui_html(openapi_url="/openapi.json", title="IoT Gateway Docs")
 
 
-@app.api_route("/{service_name}/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/{service_name}/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def proxy_router(request: Request, service_name: str, path: str):
     """ Маршрутизатор (Router) """
 

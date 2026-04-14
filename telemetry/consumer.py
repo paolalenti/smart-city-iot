@@ -2,9 +2,11 @@ import os
 import json
 
 from confluent_kafka import Consumer
-from database import SessionLocal
 
 import models
+
+from main import invalidate_device_cache, set_device_cache
+from database import SessionLocal
 
 
 def _handle_unit_created(db, data: dict):
@@ -23,6 +25,26 @@ def _handle_unit_created(db, data: dict):
         ))
     db.commit()
     print(f"[mirror] Unit uid={data['uid']} синхронизирован")
+
+
+def _handle_unit_updated(db, data: dict):
+    existing = db.query(models.Unit).filter(
+        models.Unit.uid == data["uid"]
+    ).first()
+
+    if existing is None:
+        print(f"[mirror] Unit uid={data['uid']} не найден для обновления")
+        return
+
+    existing.name = data["name"]
+    existing.type = data["type"]
+    existing.location = data.get("location")
+    existing.is_active = data.get("is_active", True)
+
+    db.commit()
+    db.refresh(existing)
+
+    print(f"[mirror] Unit uid={data['uid']} обновлён")
 
 
 def _handle_unit_deleted(db, data: dict):
@@ -44,8 +66,11 @@ def _handle_device_created(db, data: dict):
         existing.location = data.get("location")
         existing.is_active = data.get("is_active", True)
         existing.unit_id = data.get("unit_id")
+        db.commit()
+
+        set_device_cache(existing)
     else:
-        db.add(models.Device(
+        device = models.Device(
             id=data["id"],
             serial_code=data["serial_code"],
             name=data["name"],
@@ -53,25 +78,52 @@ def _handle_device_created(db, data: dict):
             location=data.get("location"),
             is_active=data.get("is_active", True),
             unit_id=data.get("unit_id"),
-        ))
+        )
+        db.add(device)
+        db.commit()
+        db.refresh(device)
+        set_device_cache(device)
 
-    db.commit()
     print(f"[mirror] Device serial={data['serial_code']} синхронизирован")
+
+
+def _handle_device_updated(db, data: dict):
+    existing = db.query(models.Device).filter(
+        models.Device.serial_code == data["serial_code"]
+    ).first()
+
+    if existing is None:
+        print(f"[mirror] Device serial={data['serial_code']} не найден для обновления")
+        return
+
+    existing.name = data["name"]
+    existing.type = data["type"]
+    existing.location = data.get("location")
+    existing.is_active = data.get("is_active", True)
+    existing.unit_id = data.get("unit_id")
+    db.commit()
+    db.refresh(existing)
+
+    set_device_cache(existing)
+    print(f"[mirror] Device serial={data['serial_code']} обновлён")
 
 
 def _handle_device_deleted(db, data: dict):
     device = db.query(models.Device).filter(models.Device.id == data["device_id"]).first()
     if device:
+        invalidate_device_cache(device.serial_code)
         db.delete(device)
         db.commit()
         print(f"[mirror] Device id={data['device_id']} удалён из зеркала")
 
 
 _HANDLERS = {
-    "unit_created":  _handle_unit_created,
-    "unit_deleted":  _handle_unit_deleted,
-    "created":       _handle_device_created,
-    "deleted":       _handle_device_deleted,
+    "unit_created": _handle_unit_created,
+    "unit_updated": _handle_unit_updated,
+    "unit_deleted": _handle_unit_deleted,
+    "created": _handle_device_created,
+    "updated": _handle_device_updated,
+    "deleted": _handle_device_deleted,
 }
 
 

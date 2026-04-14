@@ -1,12 +1,14 @@
 import os
-from datetime import datetime, timezone
-
+import json
 import redis
+
+from datetime import datetime, timezone
 from fastapi import FastAPI, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 import models
 import schemas
+
 from database import engine, get_db
 from producer import send_telemetry_event
 
@@ -21,6 +23,7 @@ redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=1, decode_respon
 
 RATE_LIMIT = 100
 RATE_LIMIT_WINDOW = 60
+DEVICE_CACHE_TTL = 300
 
 
 def check_rate_limit(request: Request):
@@ -33,6 +36,32 @@ def check_rate_limit(request: Request):
         raise HTTPException(status_code=429, detail="Too Many Requests")
 
 
+def get_device_from_cache(serial_code: int):
+    """Достаёт данные устройства из Redis. Возвращает dict или None."""
+    cached = redis_client.get(f"device:{serial_code}")
+    if cached:
+        return json.loads(cached)
+    return None
+
+
+def set_device_cache(device: models.Device):
+    """Кэширует устройство в Redis на DEVICE_CACHE_TTL секунд."""
+    data = {
+        "id": device.id,
+        "serial_code": device.serial_code,
+        "name": device.name,
+        "type": device.type,
+        "location": device.location,
+        "is_active": device.is_active,
+    }
+    redis_client.setex(f"device:{device.serial_code}", DEVICE_CACHE_TTL, json.dumps(data))
+
+
+def invalidate_device_cache(serial_code: int) -> None:
+    """Инвалидирует кэш устройства — вызывается из consumer при обновлении/удалении."""
+    redis_client.delete(f"device:{serial_code}")
+
+
 @app.post(
     "/ingest/",
     response_model=schemas.TelemetryResponse,
@@ -43,24 +72,38 @@ def ingest_telemetry(
     payload: schemas.TelemetryIngest,
     db: Session = Depends(get_db),
 ):
-    device = db.query(models.Device).filter(
-        models.Device.serial_code == payload.serial_code
-    ).first()
+    device_data = get_device_from_cache(payload.serial_code)
 
-    if device is None:
-        raise HTTPException(status_code=404, detail="Device not found")
-    if not device.is_active:
+    if device_data is None:
+        db_device = db.query(models.Device).filter(
+            models.Device.serial_code == payload.serial_code
+        ).first()
+
+        if db_device is None:
+            raise HTTPException(status_code=404, detail="Device not found")
+
+        set_device_cache(db_device)
+        device_data = {
+            "id": db_device.id,
+            "serial_code": db_device.serial_code,
+            "name": db_device.name,
+            "type": db_device.type,
+            "location": db_device.location,
+            "is_active": db_device.is_active,
+        }
+
+    if not device_data["is_active"]:
         raise HTTPException(status_code=403, detail="Device is inactive")
 
     ts = payload.timestamp or datetime.now(timezone.utc)
     ts_iso = ts.isoformat()
 
     send_telemetry_event({
-        "device_id": device.id,
-        "serial_code": device.serial_code,
-        "device_name": device.name,
-        "device_type": device.type,
-        "location": device.location,
+        "device_id": device_data["id"],
+        "serial_code": device_data["serial_code"],
+        "device_name": device_data["name"],
+        "device_type": device_data["type"],
+        "location": device_data["location"],
         "metric": payload.metric,
         "value": payload.value,
         "unit": payload.unit,
@@ -69,8 +112,8 @@ def ingest_telemetry(
 
     return schemas.TelemetryResponse(
         status="ok",
-        device_id=device.id,
-        serial_code=device.serial_code,
+        device_id=device_data["id"],
+        serial_code=device_data["serial_code"],
         metric=payload.metric,
         value=payload.value,
         timestamp=ts_iso,
