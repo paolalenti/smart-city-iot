@@ -31,19 +31,19 @@ try:
 
         payload = json.loads(msg.value().decode("utf-8"))
 
-        for reading, limits in sensor_reading_limits.items():
-            device_serial = payload.get('device_serial', None)
-            val = payload.get(reading, None)
-            if device_serial is None or val is None: continue
+        device_serial = payload.get('serial_code', None)
+        metric = payload.get('metric', None)
+        val = payload.get('value', None)
+        if device_serial is None or metric is None or val is None: continue
 
-            extreme_min, norm_min, norm_max, extreme_max = limits
-            if val >= extreme_max:
-                send_alert(device_serial, reading, high=True, extreme=True)
-            elif val <= extreme_min:
-                send_alert(device_serial, reading, high=False, extreme=True)
-            elif val > norm_max:
-                send_alert(device_serial, reading, high=True, extreme=False)
-            elif val < norm_min:
-                send_alert(device_serial, reading, high=False, extreme=False)
+        extreme_min, norm_min, norm_max, extreme_max = sensor_reading_limits[metric]
+        if val >= extreme_max:
+            send_alert(device_serial, metric, high=True, extreme=True)
+        elif val <= extreme_min:
+            send_alert(device_serial, metric, high=False, extreme=True)
+        elif val > norm_max:
+            send_alert(device_serial, metric, high=True, extreme=False)
+        elif val < norm_min:
+            send_alert(device_serial, metric, high=False, extreme=False)
 finally:
     consumer.close()

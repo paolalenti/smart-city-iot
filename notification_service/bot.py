@@ -21,4 +21,7 @@ def send_notification(notification_type: str, message: str):
         "text": f"{notification_type}\n{message}",
     }
 
-    requests.get(URL, params=params)
+    try:
+        requests.get(URL, params=params)
+    except Exception as e:
+        print(f"Не удалось отправить уведомление: {e}")
