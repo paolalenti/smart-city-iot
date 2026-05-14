@@ -1,0 +1,72 @@
+# Глобальные настройки образов
+image:
+  pullPolicy: Never
+  tag: latest
+
+# Секреты
+secrets:
+  postgresUser: iot_user
+  postgresPassword: changeme
+  postgresDb: iot_db
+  postgresDbTelemetry: iot_telemetry
+  influxdbUrl: http://influxdb:8086
+  influxdbToken: my-super-secret-token
+  influxdbOrg: iot-org
+  influxdbBucket: telemetry
+  botToken: ""
+  chatId: ""
+
+# Хранилище
+storage:
+  postgresSize: 5Gi
+  telemetryPostgresSize: 10Gi
+  kafkaSize: 5Gi
+  influxdbSize: 10Gi
+
+# Ingress
+ingress:
+  host: iot-helm.local
+  tlsSecret: iot-tls
+
+# Bitnami PostgreSQL (основная БД)
+db:
+  image:
+    registry: docker.io
+    repository: bitnami/postgresql
+    tag: latest
+  auth:
+    username: iot_user
+    password: changeme
+    database: iot_db
+  primary:
+    persistence:
+      enabled: true
+      size: 5Gi
+
+# Bitnami PostgreSQL (телеметрия)
+telemetry-db:
+  image:
+    registry: docker.io
+    repository: bitnami/postgresql
+    tag: latest
+  auth:
+    username: iot_user
+    password: changeme
+    database: iot_telemetry
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+
+# Bitnami Redis
+redis:
+  image:
+    registry: docker.io
+    repository: bitnami/redis
+    tag: latest
+  architecture: standalone
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: false

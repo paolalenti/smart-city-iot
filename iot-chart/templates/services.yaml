@@ -1,0 +1,238 @@
+# --- Device Manager ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: device-manager
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: device-manager
+  template:
+    metadata:
+      labels:
+        app: device-manager
+    spec:
+      containers:
+        - name: device-manager
+          image: iot/device-manager:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: iot-config
+            - secretRef:
+                name: iot-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: device-manager
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: device-manager
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+# --- Telemetry Ingestor ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telemetry-ingestor
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telemetry-ingestor
+  template:
+    metadata:
+      labels:
+        app: telemetry-ingestor
+    spec:
+      containers:
+        - name: telemetry-ingestor
+          image: iot/telemetry:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8001
+          envFrom:
+            - configMapRef:
+                name: iot-config
+            - secretRef:
+                name: iot-secrets
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: iot-config
+                  key: TELEMETRY_POSTGRES_HOST
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telemetry-ingestor
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: telemetry-ingestor
+  ports:
+    - port: 8001
+      targetPort: 8001
+---
+# --- Historical Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: historical-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: historical-service
+  template:
+    metadata:
+      labels:
+        app: historical-service
+    spec:
+      containers:
+        - name: historical-service
+          image: iot/historical:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8002
+          envFrom:
+            - configMapRef:
+                name: iot-config
+            - secretRef:
+                name: iot-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: historical-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: historical-service
+  ports:
+    - port: 8002
+      targetPort: 8002
+---
+# --- Alert Engine ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alert-engine
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alert-engine
+  template:
+    metadata:
+      labels:
+        app: alert-engine
+    spec:
+      containers:
+        - name: alert-engine
+          image: iot/alert-engine:latest
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: iot-config
+---
+# --- Automation Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: automation-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: automation-service
+  template:
+    metadata:
+      labels:
+        app: automation-service
+    spec:
+      containers:
+        - name: automation-service
+          image: iot/automation-service:latest
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: iot-config
+---
+# --- Notification Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: iot/notification-service:latest
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: iot-config
+            - secretRef:
+                name: iot-secrets
+---
+# --- API Gateway ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: iot/api-gateway:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: iot-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: NodePort
+  selector:
+    app: api-gateway
+  ports:
+    - port: 8000
+      targetPort: 8000
