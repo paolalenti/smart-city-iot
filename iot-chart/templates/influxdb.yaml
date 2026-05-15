@@ -25,14 +25,10 @@ spec:
               value: "setup"
             - name: DOCKER_INFLUXDB_INIT_USERNAME
               value: "admin"
-            - name: DOCKER_INFLUXDB_INIT_PASSWORD
-              value: "changeme123"
             - name: DOCKER_INFLUXDB_INIT_ORG
-              value: "iot-org"
+              value: "smart_city"
             - name: DOCKER_INFLUXDB_INIT_BUCKET
               value: "telemetry"
-            - name: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
-              value: "my-super-secret-token"
           volumeMounts:
             - name: influxdb-data
               mountPath: /var/lib/influxdb2

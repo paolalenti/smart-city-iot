@@ -147,6 +147,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: iot-config
+            - secretRef:
+                name: iot-secrets
 ---
 # --- Automation Service ---
 apiVersion: apps/v1
@@ -171,6 +173,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: iot-config
+            - secretRef:
+                name: iot-secrets
 ---
 # --- Notification Service ---
 apiVersion: apps/v1
@@ -223,6 +227,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: iot-config
+            - secretRef:
+                name: iot-secrets
 ---
 apiVersion: v1
 kind: Service

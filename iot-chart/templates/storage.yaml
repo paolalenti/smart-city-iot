@@ -23,29 +23,3 @@ spec:
   resources:
     requests:
       storage: 10Gi
----
-# --- Kafka ---
-#apiVersion: v1
-#kind: PersistentVolumeClaim
-#metadata:
-#  name: kafka-pvc
-#  namespace: {{ .Release.Namespace }}
-#spec:
-#  accessModes:
-#    - ReadWriteOnce
-#  resources:
-#    requests:
-#      storage: 5Gi
-#---
-# --- InfluxDB ---
-#apiVersion: v1
-#kind: PersistentVolumeClaim
-#metadata:
-#  name: influxdb-pvc
-#  namespace: {{ .Release.Namespace }}
-#spec:
-#  accessModes:
-#    - ReadWriteOnce
-#  resources:
-#    requests:
-#      storage: 10Gi

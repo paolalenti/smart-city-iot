@@ -4,17 +4,11 @@ image:
   tag: latest
 
 # Секреты
-secrets:
-  postgresUser: iot_user
-  postgresPassword: changeme
-  postgresDb: iot_db
-  postgresDbTelemetry: iot_telemetry
-  influxdbUrl: http://influxdb:8086
-  influxdbToken: my-super-secret-token
-  influxdbOrg: iot-org
-  influxdbBucket: telemetry
-  botToken: ""
-  chatId: ""
+vault:
+  server: "http://vault.vault.svc.cluster.local:8200"
+  path: "iot-helm"
+  role: "iot-helm-role"
+  refreshInterval: "15s"
 
 # Хранилище
 storage:
