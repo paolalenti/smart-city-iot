@@ -1,0 +1,46 @@
+---
+# roles/kafka/tasks/main.yml
+
+- name: Apply Kafka StatefulSet and Service
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'kafka.yml.j2') | from_yaml_all | list }}"
+
+- name: Wait for Kafka pod to be ready
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ kafka_namespace }}"
+    label_selectors:
+      - app=kafka
+    wait: true
+    wait_condition:
+      type: Ready
+      status: "True"
+    wait_timeout: 120
+
+- name: Create Kafka topics
+  kubernetes.core.k8s_exec:
+    namespace: "{{ kafka_namespace }}"
+    pod: kafka-0
+    command: >
+      /opt/kafka/bin/kafka-topics.sh
+      --bootstrap-server localhost:9092
+      --create
+      --if-not-exists
+      --topic {{ item.name }}
+      --partitions {{ item.partitions }}
+      --replication-factor {{ item.replication_factor }}
+  loop: "{{ kafka_topics }}"
+  register: topic_result
+  changed_when: "'Created topic' in topic_result.stdout"
+
+- name: List Kafka topics
+  kubernetes.core.k8s_exec:
+    namespace: "{{ kafka_namespace }}"
+    pod: kafka-0
+    command: /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+  register: topics_list
+
+- name: Show Kafka topics
+  debug:
+    msg: "Kafka topics: {{ topics_list.stdout_lines }}"

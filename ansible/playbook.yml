@@ -1,0 +1,12 @@
+---
+# playbook.yml
+# Запуск: docker run --rm -v ${PWD}:/work cytopia/ansible ansible-playbook /work/ansible/playbook.yml
+# Деплоит Kafka в Kubernetes через kubectl
+
+- name: Deploy Kafka to Kubernetes
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  roles:
+    - kafka

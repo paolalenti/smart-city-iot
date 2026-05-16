@@ -1,0 +1,27 @@
+---
+# roles/kafka/defaults/main.yml
+# Переменные по умолчанию — можно переопределить в playbook или vars
+
+kafka_namespace: iot-helm
+kafka_image: apache/kafka:3.9.0
+kafka_replicas: 1
+kafka_storage: 5Gi
+kafka_storage_class: standard
+kafka_cluster_id: MkU3OEVBNTcwNTJENDM2Qk
+
+kafka_topics:
+  - name: telemetry
+    partitions: 1
+    replication_factor: 1
+  - name: alerts
+    partitions: 1
+    replication_factor: 1
+  - name: commands
+    partitions: 1
+    replication_factor: 1
+  - name: notifications
+    partitions: 1
+    replication_factor: 1
+  - name: device_events
+    partitions: 1
+    replication_factor: 1
