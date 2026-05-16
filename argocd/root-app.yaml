@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/paolalenti/smart-city-iot.git
-    targetRevision: HEAD
+    targetRevision: obs
     path: argocd/apps
   destination:
     server: https://kubernetes.default.svc
