@@ -24,11 +24,30 @@ spec:
             - name: DOCKER_INFLUXDB_INIT_MODE
               value: "setup"
             - name: DOCKER_INFLUXDB_INIT_USERNAME
-              value: "admin"
+              valueFrom:
+                secretKeyRef:
+                  name: iot-secrets
+                  key: DOCKER_INFLUXDB_INIT_USERNAME
+            - name: DOCKER_INFLUXDB_INIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: iot-secrets
+                  key: DOCKER_INFLUXDB_INIT_PASSWORD
             - name: DOCKER_INFLUXDB_INIT_ORG
-              value: "smart_city"
+              valueFrom:
+                secretKeyRef:
+                  name: iot-secrets
+                  key: INFLUXDB_ORG
             - name: DOCKER_INFLUXDB_INIT_BUCKET
-              value: "telemetry"
+              valueFrom:
+                secretKeyRef:
+                  name: iot-secrets
+                  key: INFLUXDB_BUCKET
+            - name: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: iot-secrets
+                  key: INFLUXDB_TOKEN
           volumeMounts:
             - name: influxdb-data
               mountPath: /var/lib/influxdb2
