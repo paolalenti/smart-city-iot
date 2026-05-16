@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: github-runner
+  namespace: github-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: github-runner
+  template:
+    metadata:
+      labels:
+        app: github-runner
+    spec:
+      volumes:
+      - name: runner-work
+        emptyDir: {}
+      containers:
+      - name: runner
+        image: summerwind/actions-runner:latest
+        imagePullPolicy: Never
+        volumeMounts:
+        - name: runner-work
+          mountPath: /runner
+        env:
+        - name: RUNNER_NAME
+          value: "k8s-runner"
+        - name: RUNNER_REPO
+          value: "paolalenti/smart-city-iot"
+        - name: RUNNER_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-runner-secret
+              key: github-token
