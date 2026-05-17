@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  author: smart-city-iot-team
+  description: Ansible role for deploying Apache Kafka as StatefulSet in Kubernetes and creating required topics
+  license: MIT
+  min_ansible_version: "2.12"
+  platforms:
+    - name: Kubernetes
+      versions:
+        - all
+  galaxy_tags:
+    - kafka
+    - kubernetes
+    - messaging
+
+dependencies: []
