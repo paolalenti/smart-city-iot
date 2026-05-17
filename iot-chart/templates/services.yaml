@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
         - name: device-manager
-          image: {{ .Values.services.deviceManager.image }}:{{ .Values.services.deviceManager.tag }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: iot/device-manager:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8000
           envFrom:
@@ -56,8 +56,8 @@ spec:
     spec:
       containers:
         - name: telemetry-ingestor
-          image: {{ .Values.services.telemetry.image }}:{{ .Values.services.telemetry.tag }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: iot/telemetry:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8001
           envFrom:
@@ -102,8 +102,8 @@ spec:
     spec:
       containers:
         - name: historical-service
-          image: {{ .Values.services.historical.image }}:{{ .Values.services.historical.tag }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: iot/historical:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8002
           envFrom:
@@ -142,8 +142,8 @@ spec:
     spec:
       containers:
         - name: alert-engine
-          image: {{ .Values.services.alertEngine.image }}:{{ .Values.services.alertEngine.tag }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: iot/alert-engine:latest
+          imagePullPolicy: Never
           envFrom:
             - configMapRef:
                 name: iot-config
@@ -168,8 +168,8 @@ spec:
     spec:
       containers:
         - name: automation-service
-          image: {{ .Values.services.automationService.image }}:{{ .Values.services.automationService.tag }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: iot/automation-service:latest
+          imagePullPolicy: Never
           envFrom:
             - configMapRef:
                 name: iot-config
@@ -194,8 +194,8 @@ spec:
     spec:
       containers:
         - name: notification-service
-          image: {{ .Values.services.notificationService.image }}:{{ .Values.services.notificationService.tag }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: iot/notification-service:latest
+          imagePullPolicy: Never
           envFrom:
             - configMapRef:
                 name: iot-config
@@ -220,8 +220,8 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: {{ .Values.services.apiGateway.image }}:{{ .Values.services.apiGateway.tag }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: iot/api-gateway:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8000
           envFrom:
