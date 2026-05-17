@@ -10,7 +10,7 @@ spec:
     targetRevision: obs
     path: iot-chart
     helm:
-      releaseName: iot
+      releaseName: iot-helm
   destination:
     server: https://kubernetes.default.svc
     namespace: iot-helm
