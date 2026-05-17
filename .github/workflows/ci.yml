@@ -20,10 +20,13 @@ jobs:
 
       - name: Update image tags in values.yaml
         run: |
-          sed -i "s/\(apiGateway:\|deviceManager:\|telemetry:\|historical:\|alertEngine:\|automationService:\|notificationService:\)/\1/" iot-chart/values.yaml
-          for service in apiGateway deviceManager telemetry historical alertEngine automationService notificationService; do
-            sed -i "/^  $service:/,/tag:/ s/tag: .*/tag: ${{ github.sha }}/" iot-chart/values.yaml
-          done
+          SHA="${{ github.sha }}"
+          awk -v sha="$SHA" '
+            /^services:/ { in_services=1 }
+            /^[a-zA-Z]/ { if (!/^services:/) in_services=0 }
+            in_services && /^    tag:/ { $0 = "    tag: " sha }
+            { print }
+          ' iot-chart/values.yaml > /tmp/values_tmp.yaml && mv /tmp/values_tmp.yaml iot-chart/values.yaml
 
       - name: Helm upgrade
         run: |
