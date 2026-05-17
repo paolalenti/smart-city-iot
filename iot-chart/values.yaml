@@ -7,25 +7,25 @@ image:
 services:
   apiGateway:
     image: registry.kube-system.svc.cluster.local:80/iot/api-gateway
-    tag: ff9364d488af3acdc5b2cb55096f06ecb66c6691
+    tag: 50a3d8ca980e5686c60c521f46542f40eb4de733
   deviceManager:
     image: registry.kube-system.svc.cluster.local:80/iot/device-manager
-    tag: ff9364d488af3acdc5b2cb55096f06ecb66c6691
+    tag: 50a3d8ca980e5686c60c521f46542f40eb4de733
   telemetry:
     image: registry.kube-system.svc.cluster.local:80/iot/telemetry
-    tag: ff9364d488af3acdc5b2cb55096f06ecb66c6691
+    tag: 50a3d8ca980e5686c60c521f46542f40eb4de733
   historical:
     image: registry.kube-system.svc.cluster.local:80/iot/historical
-    tag: ff9364d488af3acdc5b2cb55096f06ecb66c6691
+    tag: 50a3d8ca980e5686c60c521f46542f40eb4de733
   alertEngine:
     image: registry.kube-system.svc.cluster.local:80/iot/alert-engine
-    tag: ff9364d488af3acdc5b2cb55096f06ecb66c6691
+    tag: 50a3d8ca980e5686c60c521f46542f40eb4de733
   automationService:
     image: registry.kube-system.svc.cluster.local:80/iot/automation-service
-    tag: ff9364d488af3acdc5b2cb55096f06ecb66c6691
+    tag: 50a3d8ca980e5686c60c521f46542f40eb4de733
   notificationService:
     image: registry.kube-system.svc.cluster.local:80/iot/notification-service
-    tag: ff9364d488af3acdc5b2cb55096f06ecb66c6691
+    tag: 50a3d8ca980e5686c60c521f46542f40eb4de733
 
 vault:
   server: "http://vault.vault.svc.cluster.local:8200"
