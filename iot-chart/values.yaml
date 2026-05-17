@@ -26,3 +26,6 @@ services:
   notificationService:
     image: registry.kube-system.svc.cluster.local:80/iot/notification-service
     tag: ff9364d488af3acdc5b2cb55096f06ecb66c6691
+
+vault:
+  server: "http://vault.vault.svc.cluster.local:8200"
