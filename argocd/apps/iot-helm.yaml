@@ -15,5 +15,8 @@ spec:
     server: https://kubernetes.default.svc
     namespace: iot-helm
   syncPolicy:
+    automated:
+      prune: false
+      selfHeal: false
     syncOptions:
       - CreateNamespace=false
