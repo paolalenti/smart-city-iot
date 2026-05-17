@@ -3,6 +3,30 @@ image:
   pullPolicy: Never
   tag: latest
 
+# Образы микросервисов
+services:
+  apiGateway:
+    image: iot/api-gateway
+    tag: latest
+  deviceManager:
+    image: iot/device-manager
+    tag: latest
+  telemetry:
+    image: iot/telemetry
+    tag: latest
+  historical:
+    image: iot/historical
+    tag: latest
+  alertEngine:
+    image: iot/alert-engine
+    tag: latest
+  automationService:
+    image: iot/automation-service
+    tag: latest
+  notificationService:
+    image: iot/notification-service
+    tag: latest
+
 # Секреты
 vault:
   server: "http://vault.vault.svc.cluster.local:8200"
