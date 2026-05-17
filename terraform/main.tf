@@ -144,3 +144,32 @@ resource "kubernetes_config_map" "vault_policy" {
     EOT
   }
 }
+
+# ---------------------------------------------------------------
+# Базовый секрет приложения (заглушка — реальные значения в Vault)
+# ---------------------------------------------------------------
+
+resource "kubernetes_secret" "iot_app_secrets" {
+  metadata {
+    name      = "iot-app-defaults"
+    namespace = kubernetes_namespace.iot_helm.metadata[0].name
+    labels = {
+      managed-by = "terraform"
+    }
+  }
+
+  data = {
+    POSTGRES_USER         = "iot_user"
+    POSTGRES_PASSWORD     = "changeme"
+    POSTGRES_DB           = "iot_db"
+    POSTGRES_DB_TELEMETRY = "iot_telemetry"
+    INFLUXDB_URL          = "http://influxdb:8086"
+    INFLUXDB_TOKEN        = "my-super-secret-token"
+    INFLUXDB_ORG          = "iot-org"
+    INFLUXDB_BUCKET       = "telemetry"
+    BOT_TOKEN             = ""
+    CHAT_ID               = ""
+  }
+
+  type = "Opaque"
+}
