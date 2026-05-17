@@ -16,13 +16,19 @@ jobs:
 
       - name: Install tools
         run: |
+          mkdir -p $HOME/bin
+          
           # kubectl
-          curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          echo "$GITHUB_WORKSPACE" >> $GITHUB_PATH
+          curl -Lo $HOME/bin/kubectl \
+            "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x $HOME/bin/kubectl
           
           # helm
-          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash -s -- --prefix "$GITHUB_WORKSPACE"
+          curl -fsSL https://get.helm.sh/helm-v3.17.3-linux-amd64.tar.gz \
+            | tar xz -C /tmp
+          mv /tmp/linux-amd64/helm $HOME/bin/helm
+          
+          echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Build and Push with Kaniko
         run: |
