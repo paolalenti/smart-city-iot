@@ -167,6 +167,8 @@ resource "kubernetes_secret" "iot_app_secrets" {
     INFLUXDB_TOKEN        = "my-super-secret-token"
     INFLUXDB_ORG          = "iot-org"
     INFLUXDB_BUCKET       = "telemetry"
+    DOCKER_INFLUXDB_INIT_USERNAME = "iot_user"
+    DOCKER_INFLUXDB_INIT_PASSWORD = "changeme"
     BOT_TOKEN             = ""
     CHAT_ID               = ""
   }
