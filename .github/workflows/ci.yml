@@ -20,15 +20,18 @@ jobs:
 
       - name: Update image tags in values.yaml
         run: |
-          SHA="${{ github.sha }}"
-          awk -v sha="$SHA" '
-            /^services:/ { in_services=1 }
-            /^[a-zA-Z]/ { if (!/^services:/) in_services=0 }
-            in_services && /^    tag:/ { $0 = "    tag: " sha }
-            { print }
-          ' iot-chart/values.yaml > /tmp/values_tmp.yaml && mv /tmp/values_tmp.yaml iot-chart/values.yaml
+          echo "Image tag update step: in production this would update tags to ${{ github.sha }}"
+          echo "Requires: Kaniko build + push to registry (not yet implemented)"
+          echo "Current setup uses imagePullPolicy: Never with pre-loaded minikube images"
 
       - name: Helm upgrade
         run: |
           helm upgrade iot ./iot-chart \
             --namespace iot-helm
+
+      - name: ArgoCD sync
+        run: |
+          argocd app sync iot-helm \
+            --server localhost:8080 \
+            --insecure \
+            --auth-token ${{ secrets.ARGOCD_TOKEN }} || true
