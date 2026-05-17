@@ -18,6 +18,10 @@ jobs:
         run: |
           curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
+      - name: Update image tags in values.yaml
+        run: |
+          sed -i "s/tag: latest/tag: ${{ github.sha }}/g" iot-chart/values.yaml
+
       - name: Helm upgrade
         run: |
           helm upgrade iot ./iot-chart \
