@@ -21,5 +21,4 @@ jobs:
       - name: Helm upgrade
         run: |
           helm upgrade iot ./iot-chart \
-            --namespace iot-helm \
-            --reuse-values
+            --namespace iot-helm
