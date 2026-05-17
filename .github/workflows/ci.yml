@@ -17,25 +17,18 @@ jobs:
       - name: Install tools
         run: |
           mkdir -p $HOME/bin
-          
-          # kubectl
           curl -Lo $HOME/bin/kubectl \
             "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x $HOME/bin/kubectl
-          
-          # helm
           curl -fsSL https://get.helm.sh/helm-v3.17.3-linux-amd64.tar.gz \
             | tar xz -C /tmp
           mv /tmp/linux-amd64/helm $HOME/bin/helm
-          
           echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Build and Push with Kaniko
         run: |
           SHA="${{ github.sha }}"
           REGISTRY="registry.kube-system.svc.cluster.local:80"
-          REPO="git://github.com/paolalenti/smart-city-iot"
-          BRANCH="refs/heads/obs"
 
           declare -A SERVICES
           SERVICES["api-gateway"]="api_gateway"
@@ -46,45 +39,109 @@ jobs:
           SERVICES["automation-service"]="automation_service"
           SERVICES["notification-service"]="notification_service"
 
-          # Запускаем все сборки параллельно
+          # Чистим артефакты предыдущего запуска
+          kubectl delete pvc kaniko-context -n github-runner --ignore-not-found
+          kubectl delete pod kaniko-context-helper -n github-runner --ignore-not-found
+          sleep 5
+
+          # Создаём PVC для контекста сборки
+          cat > /tmp/kaniko-pvc.yaml << 'EOF'
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: kaniko-context
+            namespace: github-runner
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 500Mi
+          EOF
+          kubectl apply -f /tmp/kaniko-pvc.yaml
+
+          # Запускаем helper pod для копирования файлов
+          cat > /tmp/kaniko-helper.yaml << 'EOF'
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: kaniko-context-helper
+            namespace: github-runner
+          spec:
+            restartPolicy: Never
+            volumes:
+            - name: ctx
+              persistentVolumeClaim:
+                claimName: kaniko-context
+            containers:
+            - name: helper
+              image: busybox:latest
+              command: ["sleep", "600"]
+              volumeMounts:
+              - name: ctx
+                mountPath: /context
+          EOF
+          kubectl apply -f /tmp/kaniko-helper.yaml
+          kubectl wait pod/kaniko-context-helper \
+            -n github-runner --for=condition=Ready --timeout=60s
+
+          # Копируем все сервисы в PVC
           for service in "${!SERVICES[@]}"; do
             dir="${SERVICES[$service]}"
-            POD_NAME="kaniko-${service}-${SHA:0:7}"
-
-            kubectl run "$POD_NAME" \
-              --image=gcr.io/kaniko-project/executor:latest \
-              --restart=Never \
-              --namespace=github-runner \
-              -- \
-              --context="${REPO}#${BRANCH}" \
-              --context-sub-path="$dir" \
-              --destination="${REGISTRY}/iot/${service}:${SHA}" \
-              --insecure
+            echo "Copying $dir → /context/$service"
+            kubectl exec -n github-runner kaniko-context-helper \
+              -- mkdir -p "/context/$service"
+            kubectl cp "${GITHUB_WORKSPACE}/${dir}/." \
+              "github-runner/kaniko-context-helper:/context/${service}/"
           done
 
-          # Ждём завершения всех подов
+          kubectl delete pod kaniko-context-helper -n github-runner --ignore-not-found
+
+          # Собираем образы по одному (PVC ReadWriteOnce)
           for service in "${!SERVICES[@]}"; do
             POD_NAME="kaniko-${service}-${SHA:0:7}"
-            echo "Waiting for $POD_NAME..."
+            echo "=== Building $service ==="
+
+            cat > /tmp/kaniko-pod.yaml << EOF
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: ${POD_NAME}
+            namespace: github-runner
+          spec:
+            restartPolicy: Never
+            volumes:
+            - name: ctx
+              persistentVolumeClaim:
+                claimName: kaniko-context
+            containers:
+            - name: kaniko
+              image: gcr.io/kaniko-project/executor:latest
+              args:
+              - "--context=dir:///context/${service}"
+              - "--destination=${REGISTRY}/iot/${service}:${SHA}"
+              - "--insecure"
+              volumeMounts:
+              - name: ctx
+                mountPath: /context
+          EOF
+            kubectl apply -f /tmp/kaniko-pod.yaml
+
             for i in $(seq 1 30); do
               phase=$(kubectl get pod "$POD_NAME" -n github-runner \
                 -o jsonpath='{.status.phase}' 2>/dev/null || echo "Pending")
               echo "  $POD_NAME: $phase"
-              if [ "$phase" = "Succeeded" ]; then break; fi
+              [ "$phase" = "Succeeded" ] && break
               if [ "$phase" = "Failed" ]; then
-                echo "Build failed for $service:"
                 kubectl logs "$POD_NAME" -n github-runner
                 exit 1
               fi
               sleep 10
             done
+
+            kubectl delete pod "$POD_NAME" -n github-runner --ignore-not-found
           done
 
-          # Чистим Kaniko поды
-          for service in "${!SERVICES[@]}"; do
-            kubectl delete pod "kaniko-${service}-${SHA:0:7}" \
-              -n github-runner --ignore-not-found
-          done
+          kubectl delete pvc kaniko-context -n github-runner --ignore-not-found
 
       - name: Update Helm Chart image tags
         run: |
