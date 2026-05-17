@@ -20,7 +20,10 @@ jobs:
 
       - name: Update image tags in values.yaml
         run: |
-          sed -i "s/tag: latest/tag: ${{ github.sha }}/g" iot-chart/values.yaml
+          sed -i "s/\(apiGateway:\|deviceManager:\|telemetry:\|historical:\|alertEngine:\|automationService:\|notificationService:\)/\1/" iot-chart/values.yaml
+          for service in apiGateway deviceManager telemetry historical alertEngine automationService notificationService; do
+            sed -i "/^  $service:/,/tag:/ s/tag: .*/tag: ${{ github.sha }}/" iot-chart/values.yaml
+          done
 
       - name: Helm upgrade
         run: |
