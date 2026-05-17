@@ -1,90 +1,28 @@
 # Глобальные настройки образов
 image:
-  pullPolicy: Never
+  pullPolicy: IfNotPresent
   tag: latest
 
 # Образы микросервисов
 services:
   apiGateway:
-    image: iot/api-gateway
+    image: registry.kube-system.svc.cluster.local:80/iot/api-gateway
     tag: latest
   deviceManager:
-    image: iot/device-manager
+    image: registry.kube-system.svc.cluster.local:80/iot/device-manager
     tag: latest
   telemetry:
-    image: iot/telemetry
+    image: registry.kube-system.svc.cluster.local:80/iot/telemetry
     tag: latest
   historical:
-    image: iot/historical
+    image: registry.kube-system.svc.cluster.local:80/iot/historical
     tag: latest
   alertEngine:
-    image: iot/alert-engine
+    image: registry.kube-system.svc.cluster.local:80/iot/alert-engine
     tag: latest
   automationService:
-    image: iot/automation-service
+    image: registry.kube-system.svc.cluster.local:80/iot/automation-service
     tag: latest
   notificationService:
-    image: iot/notification-service
+    image: registry.kube-system.svc.cluster.local:80/iot/notification-service
     tag: latest
-
-# Секреты
-vault:
-  server: "http://vault.vault.svc.cluster.local:8200"
-  path: "iot-helm"
-  role: "iot-helm-role"
-  refreshInterval: "15s"
-
-# Хранилище
-storage:
-  postgresSize: 5Gi
-  telemetryPostgresSize: 10Gi
-  kafkaSize: 5Gi
-  influxdbSize: 10Gi
-
-# Ingress
-ingress:
-  host: iot-helm.local
-  tlsSecret: iot-tls
-
-# Bitnami PostgreSQL (основная БД)
-db:
-  image:
-    registry: docker.io
-    repository: bitnami/postgresql
-    tag: latest
-  auth:
-    username: iot_user
-    password: changeme
-    database: iot_db
-  primary:
-    persistence:
-      enabled: true
-      size: 5Gi
-
-# Bitnami PostgreSQL (телеметрия)
-telemetry-db:
-  image:
-    registry: docker.io
-    repository: bitnami/postgresql
-    tag: latest
-  auth:
-    username: iot_user
-    password: changeme
-    database: iot_telemetry
-  primary:
-    persistence:
-      enabled: true
-      size: 10Gi
-
-# Bitnami Redis
-redis:
-  image:
-    registry: docker.io
-    repository: bitnami/redis
-    tag: latest
-  architecture: standalone
-  auth:
-    enabled: false
-  master:
-    persistence:
-      enabled: false

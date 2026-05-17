@@ -7,31 +7,99 @@ on:
       - main
 
 jobs:
-  helm-upgrade:
+  build-and-deploy:
     runs-on: self-hosted
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Build and Push with Kaniko
+        run: |
+          SHA="${{ github.sha }}"
+          REGISTRY="registry.kube-system.svc.cluster.local:80"
+          REPO="git://github.com/paolalenti/smart-city-iot"
+          BRANCH="refs/heads/obs"
+
+          declare -A SERVICES
+          SERVICES["api-gateway"]="api_gateway"
+          SERVICES["device-manager"]="device_manager"
+          SERVICES["telemetry"]="telemetry"
+          SERVICES["historical"]="hist"
+          SERVICES["alert-engine"]="alert_engine"
+          SERVICES["automation-service"]="automation_service"
+          SERVICES["notification-service"]="notification_service"
+
+          # Запускаем все сборки параллельно
+          for service in "${!SERVICES[@]}"; do
+            dir="${SERVICES[$service]}"
+            POD_NAME="kaniko-${service}-${SHA:0:7}"
+
+            kubectl run "$POD_NAME" \
+              --image=gcr.io/kaniko-project/executor:latest \
+              --restart=Never \
+              --namespace=github-runner \
+              -- \
+              --context="${REPO}#${BRANCH}" \
+              --context-sub-path="$dir" \
+              --destination="${REGISTRY}/iot/${service}:${SHA}" \
+              --insecure
+          done
+
+          # Ждём завершения всех подов
+          for service in "${!SERVICES[@]}"; do
+            POD_NAME="kaniko-${service}-${SHA:0:7}"
+            echo "Waiting for $POD_NAME..."
+            for i in $(seq 1 30); do
+              phase=$(kubectl get pod "$POD_NAME" -n github-runner \
+                -o jsonpath='{.status.phase}' 2>/dev/null || echo "Pending")
+              echo "  $POD_NAME: $phase"
+              if [ "$phase" = "Succeeded" ]; then break; fi
+              if [ "$phase" = "Failed" ]; then
+                echo "Build failed for $service:"
+                kubectl logs "$POD_NAME" -n github-runner
+                exit 1
+              fi
+              sleep 10
+            done
+          done
+
+          # Чистим Kaniko поды
+          for service in "${!SERVICES[@]}"; do
+            kubectl delete pod "kaniko-${service}-${SHA:0:7}" \
+              -n github-runner --ignore-not-found
+          done
+
+      - name: Update Helm Chart image tags
+        run: |
+          SHA="${{ github.sha }}"
+          awk -v sha="$SHA" '
+            /^services:/ { in_services=1 }
+            /^[a-zA-Z]/ { if (!/^services:/) in_services=0 }
+            in_services && /^    tag:/ { $0 = "    tag: " sha }
+            { print }
+          ' iot-chart/values.yaml > /tmp/values_tmp.yaml \
+            && mv /tmp/values_tmp.yaml iot-chart/values.yaml
+
+      - name: Commit updated values.yaml
+        run: |
+          git config user.email "ci@github.com"
+          git config user.name "CI Pipeline"
+          git add iot-chart/values.yaml
+          git diff --staged --quiet && echo "No changes" && exit 0
+          git commit -m "ci: update image tags to ${{ github.sha }} [skip ci]"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/paolalenti/smart-city-iot.git HEAD:obs
+
       - name: Install Helm
         run: |
           curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-      - name: Update image tags in values.yaml
-        run: |
-          echo "Image tag update step: in production this would update tags to ${{ github.sha }}"
-          echo "Requires: Kaniko build + push to registry (not yet implemented)"
-          echo "Current setup uses imagePullPolicy: Never with pre-loaded minikube images"
-
       - name: Helm upgrade
         run: |
-          helm upgrade iot ./iot-chart \
-            --namespace iot-helm
+          helm upgrade iot ./iot-chart --namespace iot-helm
 
-      - name: ArgoCD sync
+      - name: ArgoCD Sync
         run: |
-          argocd app sync iot-helm \
-            --server localhost:8080 \
-            --insecure \
-            --auth-token ${{ secrets.ARGOCD_TOKEN }} || true
+          kubectl patch app iot-helm -n argocd \
+            --type merge \
+            -p '{"operation":{"initiatedBy":{"username":"ci"},"sync":{"revision":"HEAD"}}}'
