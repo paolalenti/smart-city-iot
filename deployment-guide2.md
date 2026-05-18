@@ -85,6 +85,32 @@ Envoy DaemonSet:    OK
 Cluster Pods:       X/X managed by Cilium
 ```
 
+### Включи Hubble (наблюдаемость сети)
+
+Hubble — UI для визуализации трафика между подами в реальном времени.
+
+```powershell
+helm upgrade cilium cilium/cilium `
+  --namespace kube-system `
+  --reuse-values `
+  --set hubble.relay.enabled=true `
+  --set hubble.ui.enabled=true
+```
+
+Проверь что поды поднялись:
+```powershell
+kubectl get pods -n kube-system | Select-String "hubble"
+```
+
+Жди `1/1 Running` у `hubble-relay` и `2/2 Running` у `hubble-ui`.
+
+Открой UI (автоматически откроет браузер):
+```powershell
+cilium hubble ui
+```
+
+Граф трафика между микросервисами появится после первых запросов к `https://iot-helm.local/docs`.
+
 ---
 
 ## 3. Включи Ingress и metrics-server
@@ -117,7 +143,7 @@ kubectl get ingress -n iot-helm
 
 Добавь в `C:\Windows\System32\drivers\etc\hosts` (от администратора):
 ```
-127.0.0.1    iot-helm.local
+192.168.49.2    iot-helm.local
 ```
 
 > IP может отличаться — используй значение из колонки ADDRESS команды выше.
@@ -486,6 +512,9 @@ kubectl get secret iot-secrets -n iot-helm -o yaml
 
 # Статус Cilium
 cilium status
+
+# Открыть Hubble UI (граф трафика между подами)
+cilium hubble ui
 
 # Статус HPA
 kubectl get hpa -n iot-helm
