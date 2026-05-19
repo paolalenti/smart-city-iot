@@ -36,6 +36,12 @@ db:
     persistence:
       enabled: true
       size: 5Gi
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
 
 # Bitnami PostgreSQL (телеметрия)
 telemetry-db:
@@ -51,6 +57,12 @@ telemetry-db:
     persistence:
       enabled: true
       size: 10Gi
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
 
 # Bitnami Redis
 redis:
