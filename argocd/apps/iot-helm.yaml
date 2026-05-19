@@ -20,3 +20,4 @@ spec:
       selfHeal: false
     syncOptions:
       - CreateNamespace=false
+      - Replace=true
