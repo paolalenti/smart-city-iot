@@ -18,7 +18,7 @@ $minikubeIp = minikube ip
 
 # Создаём kubeconfig с Linux-путями и правильным IP
 $kubeconfigContent = Get-Content "$env:USERPROFILE\.kube\config" -Raw
-$kubeconfigContent = $kubeconfigContent -replace [regex]::Escape("C:\Users\Kirill\.minikube"), "/root/.minikube"
+$kubeconfigContent = $kubeconfigContent -replace [regex]::Escape("C:\Users\$env:USERNAME\.minikube"), "/root/.minikube"
 $kubeconfigContent = $kubeconfigContent -replace "\\", "/"
 $kubeconfigContent = $kubeconfigContent -replace "127\.0\.0\.1:\d+", "${minikubeIp}:8443"
 $kubeconfigContent | Set-Content "$projectRoot\ansible\kubeconfig-linux" -NoNewline
