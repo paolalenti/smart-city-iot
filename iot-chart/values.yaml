@@ -43,6 +43,8 @@ db:
       enabled: true
       runAsUser: 1001
       runAsNonRoot: true
+  volumePermissions:
+    enabled: true
 
 # Bitnami PostgreSQL (телеметрия)
 telemetry-db:
@@ -65,6 +67,8 @@ telemetry-db:
       enabled: true
       runAsUser: 1001
       runAsNonRoot: true
+  volumePermissions:
+    enabled: true
 
 # Bitnami Redis
 redis:
