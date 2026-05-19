@@ -5,7 +5,7 @@ metadata:
   namespace: iot-helm
 spec:
   hosts:
-  - telemetry.iot-helm.svc.cluster.local
+  - telemetry-ingestor.iot-helm.svc.cluster.local
   http:
   - route:
     - destination:
@@ -22,7 +22,7 @@ metadata:
   namespace: iot-helm
 spec:
   hosts:
-  - device-manager.iot-helm.svc.cluster.local
+  - telemetry-ingestor.iot-helm.svc.cluster.local
   http:
   - route:
     - destination:

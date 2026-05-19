@@ -1,10 +1,10 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: telemetry
+  name: telemetry-ingestor
   namespace: iot-helm
 spec:
-  host: telemetry.iot-helm.svc.cluster.local
+  host: telemetry-ingestor.iot-helm.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
