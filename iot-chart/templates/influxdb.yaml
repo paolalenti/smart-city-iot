@@ -31,7 +31,10 @@ spec:
                   name: iot-secrets
                   key: INFLUXDB_ADMIN_PASSWORD
             - name: DOCKER_INFLUXDB_INIT_ORG
-              value: "smart_city"
+              valueFrom:
+                secretKeyRef:
+                  name: iot-secrets
+                  key: INFLUXDB_ORG
             - name: DOCKER_INFLUXDB_INIT_BUCKET
               value: "telemetry"
             - name: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN

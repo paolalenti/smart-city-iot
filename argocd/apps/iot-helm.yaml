@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: iot-helm
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/paolalenti/smart-city-iot.git
+    targetRevision: obs
+    path: iot-chart
+    helm:
+      releaseName: iot-helm
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: iot-helm
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: false
+    syncOptions:
+      - CreateNamespace=false

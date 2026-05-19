@@ -1,0 +1,25 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - obs
+      - main
+
+jobs:
+  helm-upgrade:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      - name: Helm upgrade
+        run: |
+          helm upgrade iot ./iot-chart \
+            --namespace iot-helm \
+            --reuse-values
