@@ -3,7 +3,7 @@ from time import sleep
 from locust import HttpUser, task, between
 import random
 
-BASE_URL = "https://iot-helm.local"
+BASE_URL = "http://api-gateway.iot-helm.svc.cluster.local"
 
 NUM_DEVICES_TO_REGISTER = 1
 

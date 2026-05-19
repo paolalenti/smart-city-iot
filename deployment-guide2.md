@@ -143,7 +143,7 @@ kubectl get ingress -n iot-helm
 
 Добавь в `C:\Windows\System32\drivers\etc\hosts` (от администратора):
 ```
-192.168.49.2    iot-helm.local
+127.0.0.1    iot-helm.local
 ```
 
 > IP может отличаться — используй значение из колонки ADDRESS команды выше.
@@ -208,6 +208,7 @@ docker build -t iot/historical:latest ./hist
 docker build -t iot/alert-engine:latest ./alert_engine
 docker build -t iot/automation-service:latest ./automation_service
 docker build -t iot/notification-service:latest ./notification_service
+docker build -t iot/locust:latest ./locust
 ```
 
 Загрузи образы в minikube (нужно загрузить на все ноды — minikube делает это автоматически):
@@ -219,6 +220,7 @@ minikube image load iot/historical:latest
 minikube image load iot/alert-engine:latest
 minikube image load iot/automation-service:latest
 minikube image load iot/notification-service:latest
+minikube image load iot/locust:latest
 ```
 
 ---
@@ -487,6 +489,13 @@ kubectl get pods -n iot-helm -o wide
 ```
 
 ---
+
+## locust ui
+```
+kubectl port-forward svc/locust 8089:8089 -n iot-helm
+http://127.0.0.1:8089
+```
+
 
 ## Команды для отладки
 
