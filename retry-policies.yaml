@@ -1,0 +1,33 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: telemetry
+  namespace: iot-helm
+spec:
+  hosts:
+  - telemetry.iot-helm.svc.cluster.local
+  http:
+  - route:
+    - destination:
+        host: telemetry.iot-helm.svc.cluster.local
+    retries:
+      attempts: 3
+      retryOn: "connect-failure,gateway-error,retriable-4xx"
+      perTryTimeout: 5s
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: device-manager
+  namespace: iot-helm
+spec:
+  hosts:
+  - device-manager.iot-helm.svc.cluster.local
+  http:
+  - route:
+    - destination:
+        host: device-manager.iot-helm.svc.cluster.local
+    retries:
+      attempts: 3
+      retryOn: "connect-failure,gateway-error,retriable-4xx"
+      perTryTimeout: 5s

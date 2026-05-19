@@ -490,6 +490,53 @@ kubectl get pods -n iot-helm -o wide
 
 ---
 
+## 15. Istio
+
+Скачай Istio с [официального сайта](https://istio.io/latest/docs/setup/getting-started/#download)
+
+Установи Istio:
+```powershell
+istioctl install --set profile=default -y
+```
+
+Проверь установку:
+```powershell
+kubectl get pods -n istio-system
+kubectl get svc -n istio-system
+```
+Проверь 1/1 Running у всех подов.
+
+Настрой namespace для автоматической инъекции:
+```powershell
+kubectl label namespace iot-helm istio-injection=enabled
+```
+
+Примени конфиги mTLS и Circuit Breaker (файлы в корне проекта):
+```powershell
+kubectl apply -f traffic-policies.yaml
+kubectl apply -f retry-policies.yaml
+```
+
+Перезапусти deployments:
+```powershell
+kubectl rollout restart deployment -n iot-helm api-gateway
+kubectl rollout restart deployment -n iot-helm device-manager
+kubectl rollout restart deployment -n iot-helm telemetry-ingestor
+kubectl rollout restart deployment -n iot-helm historical-service
+kubectl rollout restart deployment -n iot-helm alert-engine
+kubectl rollout restart deployment -n iot-helm automation-service
+kubectl rollout restart deployment -n iot-helm notification-service
+```
+
+Проверить внедрение:
+```powershell
+kubectl get pods -n iot-helm
+kubectl describe pod device-manager -n iot-helm
+```
+Проверь, что в спецификации подов есть контейнер istio-proxy.
+
+---
+
 ## locust ui
 ```
 kubectl port-forward svc/locust 8089:8089 -n iot-helm
