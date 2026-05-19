@@ -9,3 +9,5 @@ venv/
 data/
 
 .idea/
+
+vault-keys.json
