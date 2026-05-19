@@ -43,6 +43,15 @@ db:
       enabled: true
       runAsUser: 1001
       runAsNonRoot: true
+    initContainers:
+      - name: fix-permissions
+        image: busybox:1.36
+        command: [ "sh", "-c", "chown -R 1001:1001 /bitnami/postgresql" ]
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+          - name: data
+            mountPath: /bitnami/postgresql
 
 # Bitnami PostgreSQL (телеметрия)
 telemetry-db:
@@ -65,6 +74,15 @@ telemetry-db:
       enabled: true
       runAsUser: 1001
       runAsNonRoot: true
+    initContainers:
+      - name: fix-permissions
+        image: busybox:1.36
+        command: [ "sh", "-c", "chown -R 1001:1001 /bitnami/postgresql" ]
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+          - name: data
+            mountPath: /bitnami/postgresql
 
 # Bitnami Redis
 redis:
